@@ -1,18 +1,26 @@
 # TANK_PROP
 
-DIAMeter 		 17.633*
-DRIFT_TUBE_Diameter 		5.50672*
-BORE_radius 	0.5*
-STEM_radius 	0.635*
-POST_radius	0.47625*
-TANK_N 		1*
-ADD_STEMS 	YES*
-ADD_PCS		YES*
-STEMS_4_WALLS 	NO*
-PCS_4_WALLS 	NO*
+tank_diameter 	51.9000
+dt_diameter 	8.9977
+bore_diameter 	2.0000
+stem_radius 	1.0000
+post_radius	1.0000
+tank_n 		1
+add_stems 	no
+add_posts 	YES
+STEMS_WALLS 	YES
+PCS_WALLS 	YES
+tuner_radius	5.0
 
+# post_couplers
+posts_loc -1 -2
+posts_h   1.0 2.05 3.02 
+# tuners
+tuners_loc 	18 	26 
+tuners_a 	80 	45 
+tuners_h 	25 	25
+	 
 
 # CELL_PROP
- 3.15655  1.0483  41.55   40    0.254 0.15   0.15  0.554 0.554 0.635 0.635  7.33618784  3.19674310
- 3.65731  1.0766  40.00   40    0.254 0.15   0.15  0.254 0.254 0.635 0.635  7.42908408  3.29715543
- 3.71868  1.1067  40.00   40    0.254 0.15   0.15  0.254 0.254 0.635 0.635  7.52938968  3.39312782
+   10.9605     4.863 62.9219970703 62.9219970703        0.5        0.3        0.3        0.5        0.5        0.8        0.8     21.958        3.3 
+   11.025      4.92  63.2507629395 63.2507629395        0.5        0.3        0.3        0.5        0.5        0.8        0.8     22.090        3.3 

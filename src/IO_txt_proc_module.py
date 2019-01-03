@@ -1,129 +1,133 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 30 10:02:43 2018
-
-@author: mohammad
-"""
 import  math as m
+import  re
 
 class text_process:
     def __init__(self, file_name):
         self.file_name = file_name
-        #self.txt_in = txt_in
-        #txt_in,cell_param,
-
-
-    def extract_param_value(self,txtIn,Param):
-        tmp = txtIn[txtIn.find(str(Param)) + len(str(Param)) + 1:txtIn.find(str(Param)) + len(Param) + 30]
-        tmp = tmp[0:tmp.find('*')]
-        return (tmp)
-
-    def extract_Tank_parameters(self,txtIn):
-        Flags_list = ['DRIFT_TUBE_Diameter', 'DIAMeter', 'BORE_radius', 'STEM_radius', 'POST_radius', 'TANK_N',
-                      'ADD_STEMS',
-                      'ADD_PCS', 'STEMS_4_WALLS', 'PCS_4_WALLS']
-        tmp_str = (txtIn.split('#'))
-
-        Tank_prop = str(tmp_str[1])
-        DT_prop = str(tmp_str[2])
-        DT_prop = DT_prop.replace("\\n', '\\n']", "\\n', '")
-        DT_prop = DT_prop.replace("']", "")
-        DT_tmp = DT_prop[DT_prop.find(',') + 3:].split("\\n', '")
-        DT_geometry = DT_tmp[:DT_tmp.__len__()];
-
-        Tank_prop = Tank_prop.replace('\\t', ' ')
-        Tank_prop = ' '.join(Tank_prop.split())
-
-        DT_DTL_radi = [0., 0., 0.]
-        STEM_POST = [0., 0.]
-        GENERAL_DATA = [''] * 5
-
-        for i in Flags_list:
-            tmp = ''
-            if i == 'DRIFT_TUBE_Diameter':
-                DT_DTL_radi[1] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'DIAMeter':
-                DT_DTL_radi[2] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'BORE_radius':
-                DT_DTL_radi[0] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'STEM_radius':
-                STEM_POST[0] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'POST_radius':
-                STEM_POST[1] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'TANK_N':
-                GENERAL_DATA[0] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'ADD_STEMS':
-                GENERAL_DATA[1] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'ADD_PCS':
-                GENERAL_DATA[2] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'STEMS_4_WALLS':
-                GENERAL_DATA[3] = self.extract_param_value(str(Tank_prop), str(i))
-            elif i == 'PCS_4_WALLS':
-                GENERAL_DATA[4] = self.extract_param_value(str(Tank_prop), str(i))
-        return (DT_DTL_radi, STEM_POST, DT_geometry, GENERAL_DATA)
 
     def IO_read(self):
-        file_obj = open(self.file_name, 'r')
-        f_text = file_obj.read()
-        return (f_text)
+        reSepParts = re.compile('(\t|\r|\n)')  
+        OnlyWordInputs = re.compile(r'[a-zA-Z_]+')
+        OnlyNumericInputs = re.compile(r'-?\d+[\.\d]*')
+        postcouplerInputs = re.compile(r'posts_loc|posts_h|tuners_loc|tuners_h|tuners_a')
+        # The cell parameter flags for creating cell_parameters_dictionary
+        cell_data_flags=[ 'GapCen','GapLen','AngL','AngR','Rc',\
+                         'Rni_L','Rni_R','FlatL','FlatR','Rno_L','Rno_R',\
+                         'Length','E0','cell_number']
+        # define output variable
+        cell_properties = list()
+        TankParameterDict = dict()
+        post_l_location = list()
+        post_h_location = list()
+        postcoupler_data = list()
+        tuner_data = dict()
+        
 
-    # this function takes a single file or text and return
-    #    listed spread shit data
-    def IO_read_sp():
-        sp_content = []
-        file_obj = open(self.file_name, 'r')
-        for line in file_obj:
-            # print(line)
-            txt = line
-            line_data = txt.split()
-            sp_content.append(line_data)
-        return (sp_content)
+        # to count cell number, start from 0
+        cell_count = int()
+                
+        for line in open(self.file_name, 'r'):#read the input files                  
+            #remove the new line and tab charachters
+            lineWOs = reSepParts.sub('', line.lower())
+            #check if the line includes only numerics                
+            if OnlyWordInputs.search(lineWOs)==None:
+                tmp_cell_datas = OnlyNumericInputs.findall(lineWOs)
+                tmp_cell_data  = [float(i) for i in tmp_cell_datas]
+                if len(tmp_cell_data)==13:
+                    tmp_cell_data.append(cell_count)
+                    cell_properties.append(dict(zip(cell_data_flags,tmp_cell_data)))
+                    cell_count +=1                       
+            #to fill the dictionary for the general properties                      
+            elif len(OnlyWordInputs.findall(lineWOs))==2:
+                tmp = OnlyWordInputs.findall(lineWOs)
+                TankParameterDict[tmp[0]] = tmp[1]
+            elif postcouplerInputs.match(lineWOs)!=None:
+                if postcouplerInputs.match(lineWOs).group(0)=='tuners_h':
+                    tmp = lineWOs[postcouplerInputs.match(lineWOs).end():]
+                    
+                    tmplist = OnlyNumericInputs.findall(tmp)
+                    tmpTuner_h = [float(i) for i in tmplist]                    
+ 
+                if postcouplerInputs.match(lineWOs).group(0)=='tuners_a':
+                    tmp = lineWOs[postcouplerInputs.match(lineWOs).end():]
+                    
+                    tmplist = OnlyNumericInputs.findall(tmp)
+                    tmpTuner_a = [float(i) for i in tmplist]                    
 
-
-
-    def IO_read(self):
-        sp_content = []
-        file_obj = open(self.file_name, 'r')
-        for line in file_obj:
-            txt = line
-            line_data = txt
-            sp_content.append(line_data)
-        return (sp_content)
-
-    def extract_cell_parameters_1(self,str_inp, dt_r1, dt_r2, cell_number, cell_offset):
-        cell_data_str = (str_inp.split())
-        cell_data = [0., ] * len(cell_data_str)
-        param_l = [0.0, ] * 12
-        param_r = [0.0, ] * 13
-        for i in range(0, len(cell_data_str) - 1):
-            cell_data[i] = float(cell_data_str[i])
-        param_l[0] = cell_data[0] - (cell_data[1] / 2.)
-        param_l[1] = cell_data[4]
-        param_l[2] = cell_data[5]
-        param_l[3] = cell_data[9]
-        param_l[4] = cell_data[2] * (m.pi / 180.)
-        param_l[5] = cell_data[7]
-        param_l[6] = 1  # a var that shows which half cell is cellected (right or left cell)
-        param_l[
-            7] = 0 + cell_offset  # this vars shows how much each cell is shifted (respect to the low energy DTL wall)
-        param_l[8] = dt_r1  # beam pipe radii
-        param_l[9] = dt_r2  # drift tube radii
-        param_l[10] = cell_number
-        param_l[11] = cell_data[11]
-
-        param_r[0] = cell_data[11] - cell_data[0] - (cell_data[1] / 2.)
-        param_r[1] = cell_data[4]
-        param_r[2] = cell_data[6]
-        param_r[3] = cell_data[10]
-        param_r[4] = cell_data[3] * (m.pi / 180.)
-        param_r[5] = cell_data[8]
-        param_r[6] = 0  # a var that shows which half cell is cellected (right or left cell)
-        param_r[7] = 0 + cell_data[
-            11] + cell_offset  # this vars shows how much each cell is shifted (respect to the low energy DTL wall)
-        param_r[8] = dt_r1  # beam pipe radii
-        param_r[9] = dt_r2  # drift tube radii
-        param_r[10] = cell_number
-        param_r[11] = cell_data[11]
-        param_r[12] = cell_data[1]
-        return (param_l, param_r)
-
+                if postcouplerInputs.match(lineWOs).group(0)=='tuners_loc':
+                    tmp = lineWOs[postcouplerInputs.match(lineWOs).end():]
+                    
+                    tmplist = OnlyNumericInputs.findall(tmp)
+                    tmpTuner_l = [float(i) for i in tmplist]                    
+                            
+                if postcouplerInputs.match(lineWOs).group(0)=='posts_h':
+                    tmp = lineWOs[postcouplerInputs.match(lineWOs).end():]
+                    
+                    tmplist = OnlyNumericInputs.findall(tmp)
+                    post_h_location = [float(i) for i in tmplist]                    
+ 
+                elif postcouplerInputs.match(lineWOs).group(0)=='posts_loc':                    
+                    tmp = lineWOs[postcouplerInputs.match(lineWOs).end():]                    
+                    tmplist = OnlyNumericInputs.findall(tmp)
+                    post_distribution = [float(i) for i in tmplist]  
+                     
+            else:    
+                try:
+                    TankParameterDict[re.search(r'[a-zA-Z_]+',lineWOs).\
+                      group()] = float(re.search(r'[+-]?\d+[\.\d]*',\
+                                      lineWOs).group())
+                except:#to ignor the errors and exceptions
+                    pass    
+        post_l_location = range(-1*int(post_distribution[0]),len(cell_properties),\
+                                -1*int(post_distribution[1]))
+        if len(post_l_location)>len(post_h_location):
+            print('warning: the hight of postcoupler numbers ['+str(1+len(post_h_location))+\
+                  '-' +str(len(post_l_location))+'] are missing in the input files'+\
+                  ' and replaced by 1.23456 cm by code')
+            for i in post_l_location[len(post_h_location):]:
+                post_h_location.append(1.23456)
+        elif len(post_l_location)>len(post_h_location):
+            print('warning: the number of hight given for post-couplers are'+
+                  ' bigger than number of post-couplers. The last numbers are removed')
+        postcoupler_data = zip(post_l_location,post_h_location)
+        tuner_data = zip(tmpTuner_l,tmpTuner_h,tmpTuner_a)
+        return([TankParameterDict,cell_properties,postcoupler_data,tuner_data])
+    def post_coupler_input(self,TankParam,cell_prop,cell_offset):
+        pass
+        
+    def cell_parameters_final_list(self,TankParam,cell_prop,cell_offset):
+        param_l = list()        
+        param_l.append(cell_prop['GapCen']-(cell_prop['GapLen']/2))
+        param_l.append(cell_prop['Rc'])#4
+        param_l.append(cell_prop['Rni_L'])#5
+        param_l.append(cell_prop['Rno_L'])#9
+        param_l.append(cell_prop['AngL']*m.pi/180.0)#2
+        param_l.append(cell_prop['FlatL'])#7
+        # a var that shows which half cell is cellected (right or left cell)
+        param_l.append(1)
+        param_l.append(cell_offset)
+        param_l.append(TankParam['bore_diameter']/2.)
+        param_l.append(TankParam['dt_diameter']/2.)
+        param_l.append(cell_prop['cell_number'])
+        param_l.append(cell_prop['Length'])
+        param_l.append(cell_prop['GapLen'])
+        
+        param_r = list()        
+        param_r.append(cell_prop['Length']-cell_prop['GapCen']-\
+                                                   (cell_prop['GapLen']/2))
+        param_r.append(cell_prop['Rc'])#4
+        param_r.append(cell_prop['Rni_R'])#6
+        param_r.append(cell_prop['Rno_R'])#10
+        param_r.append(cell_prop['AngR']*m.pi/180.0)#3*pi/180
+        param_r.append(cell_prop['FlatR'])#8
+        # a var that shows which half cell is cellected (right or left cell)
+        param_r.append(0)
+        param_r.append(cell_prop['Length']+cell_offset)
+        param_r.append(TankParam['bore_diameter']/2.)
+        param_r.append(TankParam['dt_diameter']/2.)
+        param_r.append(cell_prop['cell_number'])
+        param_r.append(cell_prop['Length'])
+        param_r.append(cell_prop['GapLen'])
+        return(param_r,param_l)
+        
+ 
